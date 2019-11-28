@@ -36,11 +36,15 @@ class StationWindow:
 
 # Make sure to make class attributes private
 class WeatherStation:
-    def __init__(coordinates):
-        return None
+    def __init__(coordinate, time):
+        self._latitude = coordinate[0]
+        self._longitude = coordinate[1]
+        self._sim_time = time
 
     # Main functionality methods
     def fill_data():
+        # When filling data, use the 'del' keyword to delete
+        # generated object from json once data extracted
         return None
 
     def generate_url():
@@ -73,11 +77,11 @@ class WindVector:
         return None
 
 #Downloading some files as a test
-#url = 'https://api.darksky.net/forecast/'+API_KEY+'/42.3601,-71.0589,255657600?exclude=currently,flags'
-#request = requests.get(url)
+url = 'https://api.darksky.net/forecast/'+API_KEY+'/42.3601,-71.0589,255657600?exclude=flags,hourly'
+request = requests.get(url)
 
-#with open(config.LOC_FOLS['surface']+'datapoint.json', 'wb') as file:
-#    file.write(request.content)
+with open(config.LOC_FOLS['surface']+'datapoint.json', 'wb') as file:
+    file.write(request.content)
 
 
 
