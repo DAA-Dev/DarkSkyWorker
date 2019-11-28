@@ -2,7 +2,7 @@
 import config, logging
 
 # Imports for proper program functionality
-import os, json, requests
+import os, json, requests, datetime
 
 # Global variables
 TAG = 'DarkSkyWorker - '
@@ -17,12 +17,67 @@ for path in config.LOC_FOLS.values():
     else:
         logging.info(TAG+'Found '+path)
 
-# Downloading some files as a test
-url = 'https://api.darksky.net/forecast/'+API_KEY+'/42.3601,-71.0589,255657600?exclude=currently,flags'
-request = requests.get(url)
+# Class to represent a viewing window
+class StationWindow:
+    def __init__(left_bot_cor, top_right_cor, dimensionsXY):
+        return None
 
-with open(config.LOC_FOLS['surface']+'datapoint.json', 'wb') as file:
-    file.write(request.content)
+    def update(time):
+        return None
+
+    def step(time_delta):
+        return None 
+
+    def update_area():
+        return None
+
+    def __str__():
+        return None
+
+# Make sure to make class attributes private
+class WeatherStation:
+    def __init__(coordinates):
+        return None
+
+    # Main functionality methods
+    def fill_data():
+        return None
+
+    def generate_url():
+        return None 
+
+    # Get, set, and __str__ methods
+    def get_temp():
+        return None
+
+    def get_wind_vector():
+        return None
+
+    def get_elevation():
+        return None
+
+    def get_pressure():
+        return None
+
+    def __str__():
+        return None
+
+# Add unit information, etc. in this comment
+class WindVector:
+    def __init__(direction, magnitude, elevation):
+        self.direction = direction
+        self.magnitude = magnitude
+        self.elevation = elevation
+
+    def __str__():
+        return None
+
+#Downloading some files as a test
+#url = 'https://api.darksky.net/forecast/'+API_KEY+'/42.3601,-71.0589,255657600?exclude=currently,flags'
+#request = requests.get(url)
+
+#with open(config.LOC_FOLS['surface']+'datapoint.json', 'wb') as file:
+#    file.write(request.content)
 
 
 
