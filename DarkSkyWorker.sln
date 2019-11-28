@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.87
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "DarkSkyWorker", "DarkSkyWorker\DarkSkyWorker.pyproj", "{A914523D-5ED7-48E3-A9C2-96A0C4707B20}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A914523D-5ED7-48E3-A9C2-96A0C4707B20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A914523D-5ED7-48E3-A9C2-96A0C4707B20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A33999EB-6DBC-4380-8770-CD8E62D622FF}
+	EndGlobalSection
+EndGlobal
