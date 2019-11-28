@@ -1,7 +1,7 @@
 import logging
 
 # Api Keys
-DARK_SKY_API_KEY = 'c5eb4fdf6a8855bcfe46cc47eaaa1cda'
+DARK_SKY_API_KEY = 'YOUR_KEY'
 
 # All local folders needed for proper program execution
 LOC_FOLS = {
