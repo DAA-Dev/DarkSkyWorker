@@ -19,8 +19,30 @@ def s_ext(str, length):
 # Create an array of weather points for the display, and then one point for the plane's 
 # current location
 class WeatherWindow:
-    def __init__(self, left_bot_cor, top_right_cor, dimensionsXY):
-        return None
+    def __init__(self, left_bot_cor, right_top_cor, plane_coordinate, dimensionsXY, time):
+        lat_min = left_bot_cor[0]
+        lat_max = right_top_cor[0]
+        lat_increment = (lat_max-lat_min) / (dimensionsXY[0] - 1)
+
+        lon_min = left_bot_cor[1]
+        lon_max = right_top_cor[1]
+        lon_increment = (lon_max-lon_min) / (dimensionsXY[1] - 1)
+
+        self._weather_grid = []
+        # Outer loop
+        for i in range(dimensionsXY[1]):
+            weather_row = []
+            lon  = lon_max - (lon_increment * i)
+            # Inner loop
+            for j in range(dimensionsXY[0]):
+                lat = lat_min + (lat_increment * j)
+                weather_row.append(WeatherPoint([lat, lon], time))
+            self._weather_grid.append(weather_row)
+
+        self._dimensions = dimensionsXY
+        self._plane_datapoint = WeatherPoint(plane_coordinate, time)
+        self._sim_time = time
+
 
     def update(self, time):
         return None
@@ -32,8 +54,18 @@ class WeatherWindow:
         return None
 
     def __str__(self):
-        return None
+        printout = 'WEATHER WINDOW\n*******************************************************\n'
+        for i,row in enumerate(self._weather_grid):
+            for j,datapoint in enumerate(row):
+                printout += 'Coordinate: [' + str(j) + ', ' + str(i) + ']' + '\n'
+                printout += str(datapoint) + '\n\n'
+        printout += 'Dimesions of window: ' + str(self._dimensions) + '\n'
+        printout += '\nPlane Datapoint:\n' + str(self._plane_datapoint) + '\n\n'
+        printout += 'Simulation Time: ' + str(self._sim_time) + '\n'
+        printout += '*******************************************************'
+        return printout
 
+# Class to represent the weather given a gps point and a time
 class WeatherPoint:
     def __init__(self, coordinate, time):
         # Attributes specified by the user
@@ -49,6 +81,9 @@ class WeatherPoint:
         self._sunset_time = None
         self._precipitation_intensity = None
         self._precipitation_probability = None
+
+        self.missing_data = False
+        self.missing_wind = False
 
         # Filling all the data from DarkSky's API
         self.fill_data()
@@ -123,14 +158,22 @@ class WeatherPoint:
             self._humidity = json_data['currently']['humidity']
             self.sunrise_time = json_data['daily']['data'][0]['sunriseTime']
             self.sunset_time = json_data['daily']['data'][0]['sunsetTime']
-
+        except:
+            print()
+            logging.error(TAG+'ERROR: Could not get data for datapoint from DarkSky')
+            self.missing_data = True
+            print()
+        
+        try:
             direction = json_data['currently']['windBearing']
             magnitude = json_data['currently']['windSpeed']
             gusts = json_data['currently']['windGust']
             self._wind_vector = WindVector(direction, magnitude, gusts)
         except:
-            logging.error(TAG+'ERROR: Could not get data for datapoint from DarkSky')
-
+            print()
+            logging.error(TAG+'ERROR: Could not get wind data for datapoint from DarkSky')
+            self.missing_wind = True
+            print()
         del json_data
         
     # Generates request URL used to get information from the API

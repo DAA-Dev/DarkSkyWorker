@@ -19,5 +19,6 @@ def init_environment():
             logging.info(TAG+'Found '+path)
 
 init_environment()
-point = WeatherPoint([38.149284, -108.755224], datetime.datetime(2010, 7, 14, 9, 33, tzinfo=timezone.utc))
-print(point)
+
+window = WeatherWindow([38.149284, -108.755224], [41.951239, -102.351951], [40.0, -106.755224], [2, 3], datetime.datetime(2010, 7, 14, 9, 33, tzinfo=timezone.utc))
+print(window)
