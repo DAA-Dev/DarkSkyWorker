@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>a914523d-5ed7-48e3-a9c2-96a0c4707b20</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>DarkSkyWorker.py</StartupFile>
+    <StartupFile>tester.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -23,6 +23,9 @@
   <ItemGroup>
     <Compile Include="DarkSkyWorker.py" />
     <Compile Include="config.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tester.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

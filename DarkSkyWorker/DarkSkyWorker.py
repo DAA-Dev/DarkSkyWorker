@@ -3,85 +3,192 @@ import config, logging
 
 # Imports for proper program functionality
 import os, json, requests, datetime
+from datetime import timezone
 
 # Global variables
 TAG = 'DarkSkyWorker - '
 API_KEY = config.DARK_SKY_API_KEY
 
-# Initializing the local file environment
-logging.info(TAG+'Initializing the local environment')
-for path in config.LOC_FOLS.values():
-    if not os.path.exists(path):
-        logging.info(TAG+'Creating '+path)
-        os.mkdir(path)
-    else:
-        logging.info(TAG+'Found '+path)
+# Simple sign-extension method
+def s_ext(str, length):
+    while len(str) != length:
+        str = '0'+str
+    return str
 
 # Class to represent a viewing window
-class StationWindow:
-    def __init__(left_bot_cor, top_right_cor, dimensionsXY):
+# Create an array of weather points for the display, and then one point for the plane's 
+# current location
+class WeatherWindow:
+    def __init__(self, left_bot_cor, top_right_cor, dimensionsXY):
         return None
 
-    def update(time):
+    def update(self, time):
         return None
 
-    def step(time_delta):
+    def step(self, time_delta):
         return None 
 
-    def update_area():
+    def update_area(self):
         return None
 
-    def __str__():
+    def __str__(self):
         return None
 
-# Make sure to make class attributes private
-class WeatherStation:
-    def __init__(coordinate, time):
-        self._latitude = coordinate[0]
-        self._longitude = coordinate[1]
-        self._sim_time = time
+class WeatherPoint:
+    def __init__(self, coordinate, time):
+        # Attributes specified by the user
+        self.latitude = coordinate[0]
+        self.longitude = coordinate[1]
+        self.sim_time = time
+        
+        # Attributes filled from API, read only via properties
+        self._wind_vector = None
+        self._temperature = None
+        self._humidity = None
+        self._sunrise_time = None
+        self._sunset_time = None
+        self._precipitation_intensity = None
+        self._precipitation_probability = None
 
-    # Main functionality methods
-    def fill_data():
-        # When filling data, use the 'del' keyword to delete
-        # generated object from json once data extracted
-        return None
+        # Filling all the data from DarkSky's API
+        self.fill_data()
+    
+    # Setting the all attributes filled by the API as read-only
+    @property
+    def sim_time(self):
+        return self.__sim_time
 
-    def generate_url():
-        return None 
+    # Converts datetime passed into sim_time into DarkSky's requested format
+    @sim_time.setter
+    def sim_time(self, sim_time):
+        self.__sim_time  = str(sim_time.year) + '-'
+        self.__sim_time += s_ext(str(sim_time.month), 2) + '-'
+        self.__sim_time += s_ext(str(sim_time.day), 2) + 'T'
+        self.__sim_time += s_ext(str(sim_time.hour), 2) + ':'
+        self.__sim_time += s_ext(str(sim_time.minute), 2) + ':'
+        self.__sim_time += s_ext(str(sim_time.second), 2)
+        self.__sim_time += 'Z'                                      # This is the timezone, all times are UTC
+        logging.info(TAG+'Set time: '+self.__sim_time)
 
-    # Get, set, and __str__ methods
-    def get_temp():
-        return None
+    @property
+    def wind_vector(self):
+        return self._wind_vector
 
-    def get_wind_vector():
-        return None
+    @property
+    def temperature(self):
+        return self._temperature
 
-    def get_elevation():
-        return None
+    @property
+    def humidity(self):
+        return self._humidity
 
-    def get_pressure():
-        return None
+    @property
+    def sunrise_time(self):
+        return self._sunrise_time
 
-    def __str__():
-        return None
+    # Converts sunrise time given in UNIX time to datetime
+    @sunrise_time.setter
+    def sunrise_time(self, sunrise_time):
+        self._sunrise_time = datetime.datetime.fromtimestamp(sunrise_time, timezone.utc)
 
-# Add unit information, etc. in this comment
+    @property
+    def sunset_time(self):
+        return self._sunset_time
+
+    # Converts sunset time given in UNIX time to datetime
+    @sunset_time.setter
+    def sunset_time(self, sunset_time):
+        self._sunset_time = datetime.datetime.fromtimestamp(sunset_time, timezone.utc)
+
+    @property
+    def precipitation_intensity(self):
+        return self._precipitation_intensity
+
+    @property
+    def precipitation_probability(self):
+        return self._precipitation_probability
+
+    # Fills protected attributes with data from the API
+    def fill_data(self):
+        # Getting and decoding the data from DarkSky API
+        url = self.generate_url()
+        request = requests.get(url)
+        json_data = json.loads(request.content.decode('utf-8'))
+
+        try:
+            # Fills all the protected attributes of the class
+            self._precipitation_intensity = json_data['currently']['precipIntensity']
+            self._precipitation_probability = json_data['currently']['precipProbability']
+            self._temperature = json_data['currently']['temperature']
+            self._humidity = json_data['currently']['humidity']
+            self.sunrise_time = json_data['daily']['data'][0]['sunriseTime']
+            self.sunset_time = json_data['daily']['data'][0]['sunsetTime']
+
+            direction = json_data['currently']['windBearing']
+            magnitude = json_data['currently']['windSpeed']
+            gusts = json_data['currently']['windGust']
+            self._wind_vector = WindVector(direction, magnitude, gusts)
+        except:
+            logging.error(TAG+'ERROR: Could not get data for datapoint from DarkSky')
+
+        del json_data
+        
+    # Generates request URL used to get information from the API
+    def generate_url(self):
+        url =  'https://api.darksky.net/forecast/'
+        url += API_KEY
+        url += '/'+str(self.latitude)+','+str(self.longitude)
+        url += ','+self.sim_time
+        url += '?exclude=hourly'
+        
+        logging.info(TAG+'Generated url: '+url)
+        return url
+
+    def __str__(self):
+        desc  = 'Latitude: ' + str(self.latitude) + '\n'
+        desc += 'Longitude: ' + str(self.longitude) + '\n'
+        desc += 'Time: ' + str(self.sim_time) + '\n'
+        desc += '*******Wind Vector*******\n' + str(self._wind_vector) + '\n'
+        desc += '*************************\n'
+        desc += 'Temperature: '+ str(self._temperature) + 'F\n'
+        desc += 'Humidity: ' + str(self._humidity) + '\n'
+        desc += 'Sunrise Time: '+ str(self._sunrise_time) + '\n'
+        desc += 'Sunset Time: '+ str(self._sunset_time) + '\n'
+        desc += 'Precipitation Intensity: '+ str(self._precipitation_intensity) + '\n'
+        desc += 'Precipitation Probability: '+ str(self._precipitation_probability)
+        return desc
+
+# Class to represent a wind vector, speed in mph, bearing in degrees
 class WindVector:
-    def __init__(direction, magnitude, elevation):
-        self.direction = direction
-        self.magnitude = magnitude
-        self.elevation = elevation
+    def __init__(self, direction, magnitude, gusts):
+        self._direction = direction
+        self._magnitude = magnitude
+        self._gusts = gusts
 
-    def __str__():
-        return None
+    @property
+    def direction(self):
+        return self._direction
+
+    @property
+    def magnitude(self):
+        return self._magnitude
+
+    @property
+    def gusts(self):
+        return self._gusts
+
+    def __str__(self):
+        desc  = 'Wind Direction: ' + str(self._direction) + ' degrees\n'
+        desc += 'Wind Speed: ' + str(self._magnitude) + ' mph\n'
+        desc += 'Wind Gusts: ' + str(self._gusts)
+        return desc
 
 #Downloading some files as a test
-url = 'https://api.darksky.net/forecast/'+API_KEY+'/42.3601,-71.0589,255657600?exclude=flags,hourly'
-request = requests.get(url)
+#url = 'https://api.darksky.net/forecast/'+API_KEY+'/42.3601,-71.0589,255657600?exclude=flags,hourly'
+#request = requests.get(url)
 
-with open(config.LOC_FOLS['surface']+'datapoint.json', 'wb') as file:
-    file.write(request.content)
+#with open(config.LOC_FOLS['data']+'datapoint.json', 'wb') as file:
+#    file.write(request.content)
 
 
 

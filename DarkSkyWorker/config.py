@@ -5,8 +5,7 @@ DARK_SKY_API_KEY = ''
 
 # All local folders needed for proper program execution
 LOC_FOLS = {
-    'data'    : 'data/',
-    'surface' : 'data/surface-data/'
+    'data'    : 'data/'
 }
 
 # Configuration for program logging
