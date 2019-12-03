@@ -90,6 +90,7 @@ class WeatherWindow:
                 lat = lat_min + (lat_increment * j)
                 weather_row.append(WeatherPoint([lat, lon], self._sim_time))
             self._weather_grid.append(weather_row)
+        logging.info(TAG+'Updated the weather window area')
     
     # Updates the coordinates of the aircraft
     def update_plane_data(self, new_plane_coordinates, new_time=None):
