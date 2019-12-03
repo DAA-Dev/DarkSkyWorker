@@ -15,9 +15,7 @@ def s_ext(str, length):
         str = '0'+str
     return str
 
-# Class to represent a viewing window
-# Create an array of weather points for the display, and then one point for the plane's 
-# current location
+# Class to represent a viewing window in the simulation
 class WeatherWindow:
     def __init__(self, left_bot_cor, right_top_cor, plane_coordinate, dimensionsXY, time):
         lat_min = left_bot_cor[0]
@@ -29,11 +27,10 @@ class WeatherWindow:
         lon_increment = (lon_max-lon_min) / (dimensionsXY[1] - 1)
 
         self._weather_grid = []
-        # Outer loop
+        # Code to fill self._weather_grid with current data from the darksky API
         for i in range(dimensionsXY[1]):
             weather_row = []
             lon  = lon_max - (lon_increment * i)
-            # Inner loop
             for j in range(dimensionsXY[0]):
                 lat = lat_min + (lat_increment * j)
                 weather_row.append(WeatherPoint([lat, lon], time))
@@ -42,16 +39,56 @@ class WeatherWindow:
         self._dimensions = dimensionsXY
         self._plane_datapoint = WeatherPoint(plane_coordinate, time)
         self._sim_time = time
+        logging.info(TAG+'Created a new WeatherWindow Object!')
 
+    # Change the time of all the data in the weather window with the argument passed
+    def update_time(self, time):
+        self._sim_time = time
+        for row in self._weather_grid:
+            for datapoint in row:
+                datapoint.sim_time = self._sim_time
+                datapoint.fill_data()
+        self._plane_datapoint.sim_time = self._sim_time
+        self._plane_datapoint.fill_data()
+        logging.info(TAG+'Updated WeatherWindow time to: '+str(self._sim_time))
 
-    def update(self, time):
-        return None
+    # Takes a timedelta object as an argument, and increments the time of data in the window by the argument
+    def step_time(self, time_delta):
+        self._sim_time = self._sim_time + time_delta
+        for row in self._weather_grid:
+            for datapoint in row:
+                datapoint.sim_time = self._sim_time
+                datapoint.fill_data()
+        self._plane_datapoint.sim_time = self._sim_time
+        self._plane_datapoint.fill_data()
+        logging.info(TAG+'Updated WeatherWindow time to: '+str(self._sim_time))
 
-    def step(self, time_delta):
-        return None 
+    # Updates the area of the weather window
+    def update_area(self, new_left_bot, new_right_top):
+        lat_min = new_left_bot[0]
+        lat_max = new_right_top[0]
+        lat_increment = (lat_max-lat_min) / (self._dimensions[0] - 1)
 
-    def update_area(self):
-        return None
+        lon_min = new_left_bot[1]
+        lon_max = new_right_top[1]
+        lon_increment = (lon_max-lon_min) / (self._dimensions[1] - 1)
+
+        self._weather_grid = []
+        # Code to fill self._weather_grid with current data from the darksky API
+        for i in range(self._dimensions[1]):
+            weather_row = []
+            lon  = lon_max - (lon_increment * i)
+            for j in range(self._dimensions[0]):
+                lat = lat_min + (lat_increment * j)
+                weather_row.append(WeatherPoint([lat, lon], self._sim_time))
+            self._weather_grid.append(weather_row)
+    
+    # Updates the coordinates of the aircraft
+    def update_plane_coors(self, new_plane_coordinates):
+        self._plane_datapoint.latitude = new_plane_coordinates[0]
+        self._plane_datapoint.longitude = new_plane_coordinates[1]
+        self._plane_datapoint.fill_data()
+        logging.info(TAG+'Updated plane coordinates to: ['+str(new_plane_coordinates[0])+', '+str(new_plane_coordinates[1])+']')
 
     def __str__(self):
         printout = 'WEATHER WINDOW\n*******************************************************\n'
@@ -223,15 +260,9 @@ class WindVector:
     def __str__(self):
         desc  = 'Wind Direction: ' + str(self._direction) + ' degrees\n'
         desc += 'Wind Speed: ' + str(self._magnitude) + ' mph\n'
-        desc += 'Wind Gusts: ' + str(self._gusts)
+        desc += 'Wind Gusts: ' + str(self._gusts) + ' mph'
         return desc
 
-#Downloading some files as a test
-#url = 'https://api.darksky.net/forecast/'+API_KEY+'/42.3601,-71.0589,255657600?exclude=flags,hourly'
-#request = requests.get(url)
-
-#with open(config.LOC_FOLS['data']+'datapoint.json', 'wb') as file:
-#    file.write(request.content)
-
-
-
+# Possible future changes:
+# 1) Get rid of datapoints on the edges of _weather_grid in the WeatherWindow object, as they cannot be 
+#    displayed properly, and really don't contribute too much to the aircraft analysis
