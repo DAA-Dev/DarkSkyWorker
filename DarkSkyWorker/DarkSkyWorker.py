@@ -41,6 +41,14 @@ class WeatherWindow:
         self._sim_time = time
         logging.info(TAG+'Created a new WeatherWindow Object!')
 
+    @property
+    def weather_grid(self):
+        return self._weather_grid
+
+    @property
+    def plane_datapoint(self):
+        return self._plane_datapoint
+
     # Change the time of all the data in the weather window with the argument passed
     def update_time(self, time):
         self._sim_time = time
@@ -84,11 +92,25 @@ class WeatherWindow:
             self._weather_grid.append(weather_row)
     
     # Updates the coordinates of the aircraft
-    def update_plane_coors(self, new_plane_coordinates):
+    def update_plane_data(self, new_plane_coordinates, new_time=None):
         self._plane_datapoint.latitude = new_plane_coordinates[0]
         self._plane_datapoint.longitude = new_plane_coordinates[1]
+
+        if new_time is not None:
+            self._plane_datapoint.sim_time = new_time
+
         self._plane_datapoint.fill_data()
         logging.info(TAG+'Updated plane coordinates to: ['+str(new_plane_coordinates[0])+', '+str(new_plane_coordinates[1])+']')
+
+    # Updates the coordinates of the aicraft, and steps time only for the aircraft
+    def step_plane_data(self, new_plane_coordinates, time_delta):
+        self._plane_datapoint.sim_time = self._plane_datapoint.sim_time + time_delta
+        self._plane_datapoint.latitude = new_plane_coordinates[0]
+        self._plane_datapoint.longitude = new_plane_coordinates[1]
+
+        self._plane_datapoint.fill_data()
+        logging.info(TAG+'Updated plane coordinates to: ['+str(new_plane_coordinates[0])+', '+str(new_plane_coordinates[1])+']')
+        logging.info(TAG+'Updated plane time to: ' + str(self._plane_datapoint.sim_time))
 
     def __str__(self):
         printout = 'WEATHER WINDOW\n*******************************************************\n'
@@ -125,23 +147,28 @@ class WeatherPoint:
         # Filling all the data from DarkSky's API
         self.fill_data()
     
-    # Setting the all attributes filled by the API as read-only
     @property
     def sim_time(self):
         return self.__sim_time
 
-    # Converts datetime passed into sim_time into DarkSky's requested format
     @sim_time.setter
     def sim_time(self, sim_time):
-        self.__sim_time  = str(sim_time.year) + '-'
-        self.__sim_time += s_ext(str(sim_time.month), 2) + '-'
-        self.__sim_time += s_ext(str(sim_time.day), 2) + 'T'
-        self.__sim_time += s_ext(str(sim_time.hour), 2) + ':'
-        self.__sim_time += s_ext(str(sim_time.minute), 2) + ':'
-        self.__sim_time += s_ext(str(sim_time.second), 2)
-        self.__sim_time += 'Z'                                      # This is the timezone, all times are UTC
-        logging.info(TAG+'Set time: '+self.__sim_time)
+        self.__sim_time = sim_time
 
+    # Converts datetime passed into sim_time into DarkSky's requested format
+    def sim_time_conversion(self):
+        darksky_time  = str(self.__sim_time.year) + '-'
+        darksky_time += s_ext(str(self.__sim_time.month), 2) + '-'
+        darksky_time += s_ext(str(self.__sim_time.day), 2) + 'T'
+        darksky_time += s_ext(str(self.__sim_time.hour), 2) + ':'
+        darksky_time += s_ext(str(self.__sim_time.minute), 2) + ':'
+        darksky_time += s_ext(str(self.__sim_time.second), 2)
+        darksky_time += 'Z'                                      # This is the timezone, all times are UTC
+        
+        logging.info(TAG+'Converted datetime object to DarkSky time: '+str(self.__sim_time))
+        return darksky_time
+
+    # Setting the all attributes filled by the API as read-only
     @property
     def wind_vector(self):
         return self._wind_vector
@@ -195,6 +222,7 @@ class WeatherPoint:
             self._humidity = json_data['currently']['humidity']
             self.sunrise_time = json_data['daily']['data'][0]['sunriseTime']
             self.sunset_time = json_data['daily']['data'][0]['sunsetTime']
+            self.missing_data = False
         except:
             print()
             logging.error(TAG+'ERROR: Could not get data for datapoint from DarkSky')
@@ -206,6 +234,7 @@ class WeatherPoint:
             magnitude = json_data['currently']['windSpeed']
             gusts = json_data['currently']['windGust']
             self._wind_vector = WindVector(direction, magnitude, gusts)
+            self.missing_wind = False
         except:
             print()
             logging.error(TAG+'ERROR: Could not get wind data for datapoint from DarkSky')
@@ -218,7 +247,7 @@ class WeatherPoint:
         url =  'https://api.darksky.net/forecast/'
         url += API_KEY
         url += '/'+str(self.latitude)+','+str(self.longitude)
-        url += ','+self.sim_time
+        url += ','+self.sim_time_conversion()
         url += '?exclude=hourly'
         
         logging.info(TAG+'Generated url: '+url)
@@ -266,3 +295,6 @@ class WindVector:
 # Possible future changes:
 # 1) Get rid of datapoints on the edges of _weather_grid in the WeatherWindow object, as they cannot be 
 #    displayed properly, and really don't contribute too much to the aircraft analysis
+#
+# 2) Create a method that updates the time for a weather window, but only fills the data for
+#    the plane
